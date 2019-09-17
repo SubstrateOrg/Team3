@@ -8,7 +8,7 @@
 /// For more guidance on Substrate modules, see the example module
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
 
-use support::{decl_module, decl_storage, decl_event, StorageValue, StorageMap,dispatch::Result};
+use support::{decl_module, decl_storage, decl_event, StorageValue, StorageMap,dispatch::Result,ensure};
 use system::ensure_signed;
 use codec::{Codec, Encode, Decode};
 use sr_primitives::traits::{Hash, Zero};
@@ -22,22 +22,22 @@ pub struct Gundam<Hash, Balance> {
     price: Balance,
     gen: u64,
 }
-
-//! 128 bit DNA
-//! [0] [1] [2] ... [15] bytes from hash
-//! [0] = star  [Value mod 5] + 1  from 1 to 5
-//! [1] = type  [Value mod 3] + 1  1: Sword, 2: Sniper, 3: Speed
-//! Gundam1 adn 2 generate new one
-//! hash = get_new_hash()
-//! new[0] = (Gundam1 [0] + Gundam2[0])/2;
-//! new[0] = new[0] + providence(); //providence in [-1 , 0 , 1]
-//! if(new[0]) > 5 new[0] = 5
-//! if(new[0]) < 1 new[0] = 1
-//! if(Gundam1[1] == Gundam2[1])
-//! new[1] = Gundam1[1];
-//! else 
-//! new[1] = [Value mod 3] + 1;
-
+/*
+128 bit DNA
+[0] [1] [2] ... [15] bytes from hash
+[0] = star  [Value mod 5] + 1  from 1 to 5
+[1] = type  [Value mod 3] + 1  1: Sword, 2: Sniper, 3: Speed
+Gundam1 adn 2 generate new one
+hash = get_new_hash()
+new[0] = (Gundam1 [0] + Gundam2[0])/2;
+new[0] = new[0] + providence(); //providence in [-1 , 0 , 1]
+if(new[0]) > 5 new[0] = 5
+if(new[0]) < 1 new[0] = 1
+if(Gundam1[1] == Gundam2[1])
+new[1] = Gundam1[1];
+else 
+new[1] = [Value mod 3] + 1;
+*/
 pub trait Trait: balances::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
@@ -60,6 +60,12 @@ decl_storage! {
 		//pub ReservedBalance get(reserved_balance): map T::AccountId => T::Balance;
 		AccValue get(acc_bal): map T::AccountId => Option<u32>;
 		OwnedGundam get(gundam_of_owner): map T::AccountId => Gundam<T::Hash, T::Balance>;
+		GundamOwner get(owner_of): map T::Hash => Option<T::AccountId>;
+
+        AllGundamsArray get(gundam_by_index): map u64 => T::Hash;
+        AllGundamsCount get(all_gundams_count): u64;
+        AllGundamsIndex: map T::Hash => u64;
+		Nonce: u64;
 	}
 }
 
@@ -109,10 +115,19 @@ decl_module! {
 		//avalon fn 1
 		pub fn create_gundam(origin) -> Result {
             let sender = ensure_signed(origin)?;
+			let all_gundams_count = Self::all_gundams_count();
+			let new_all_gundams_count = all_gundams_count.checked_add(1)
+                .ok_or("Overflow adding a new gundam to total supply")?;
+
+            let nonce = Nonce::get();
+            let random_hash = (<system::Module<T>>::random_seed(), &sender, nonce)
+                .using_encoded(<T as system::Trait>::Hashing::hash);
+
+            ensure!(!<GundamOwner<T>>::exists(random_hash), "Gundam already exists");
 
             let zaku = Gundam {
-                id: <T as system::Trait>::Hashing::hash_of(&0),
-                dna: <T as system::Trait>::Hashing::hash_of(&0),
+                id: random_hash,
+                dna: random_hash,
                 price: Zero::zero(),
                 gen: 0,
             };
