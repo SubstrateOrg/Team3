@@ -16,17 +16,21 @@ use sr_primitives::traits::{Hash, Zero};
 // NOTE: We have added this struct template for you
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct Gundam<Hash, Balance> {
+pub struct Gundam<Hash> {
 	id: Hash,
     dna: Hash,
-    price: Balance,
-    gen: u64,
 }
 /*
 128 bit DNA
-[0] [1] [2] ... [15] bytes from hash
-[0] = star  [Value mod 5] + 1  from 1 to 5
-[1] = type  [Value mod 3] + 1  1: Sword, 2: Sniper, 3: Speed
+[0] [1] [2] ... [15] bytes from random hash
+[0] = stars  [Value mod 5] + 1  from 1 to 5
+# level
+# want to make  5 starts harder to get then 1
+[1] = type   [Value mod 3] + 1  
+# 1: Sword, 2: Sniper, 3: Speed 
+# Speed weak sniper, Sniper weak Sword, Sword weak Speed. 
+# ref 'weak' in FGO, not resist
+# how about a 'duel function' for two gundams fight, loser deleted
 Gundam1 adn 2 generate new one
 hash = get_new_hash()
 new[0] = (Gundam1 [0] + Gundam2[0])/2;
@@ -38,7 +42,7 @@ new[1] = Gundam1[1];
 else 
 new[1] = [Value mod 3] + 1;
 */
-pub trait Trait: balances::Trait {
+pub trait Trait: system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
@@ -59,12 +63,15 @@ decl_storage! {
         AvBool get(my_bool_getter): Option<bool>;
 		//pub ReservedBalance get(reserved_balance): map T::AccountId => T::Balance;
 		AccValue get(acc_bal): map T::AccountId => Option<u32>;
-		OwnedGundam get(gundam_of_owner): map T::AccountId => Gundam<T::Hash, T::Balance>;
+		//
+		Gundams get(gundam): map T::Hash => Gundam<T::Hash>;
 		GundamOwner get(owner_of): map T::Hash => Option<T::AccountId>;
 
         AllGundamsArray get(gundam_by_index): map u64 => T::Hash;
         AllGundamsCount get(all_gundams_count): u64;
         AllGundamsIndex: map T::Hash => u64;
+
+		OwnedGundam get(gundam_of_owner): map T::AccountId => T::Hash;
 		Nonce: u64;
 	}
 }
@@ -128,11 +135,18 @@ decl_module! {
             let zaku = Gundam {
                 id: random_hash,
                 dna: random_hash,
-                price: Zero::zero(),
-                gen: 0,
             };
 
-            <OwnedGundam<T>>::insert(&sender, zaku);
+			<Gundams<T>>::insert(random_hash, zaku);
+			<GundamOwner<T>>::insert(random_hash, &sender);
+
+            <AllGundamsArray<T>>::insert(all_gundams_count, random_hash);
+            AllGundamsCount::put(new_all_gundams_count);
+            <AllGundamsIndex<T>>::insert(random_hash, all_gundams_count);
+
+            <OwnedGundam<T>>::insert(&sender, random_hash);
+
+            Nonce::mutate(|n| *n += 1);
             Ok(())
         }
 	}
