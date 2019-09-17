@@ -10,24 +10,56 @@
 
 use support::{decl_module, decl_storage, decl_event, StorageValue, StorageMap,dispatch::Result};
 use system::ensure_signed;
+use codec::{Codec, Encode, Decode};
+use sr_primitives::traits::{Hash, Zero};
 
-/// The module's configuration trait.
-pub trait Trait: system::Trait {
-	// TODO: Add other types and constants required configure this module.
+// NOTE: We have added this struct template for you
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct Gundam<Hash, Balance> {
+	id: Hash,
+    dna: Hash,
+    price: Balance,
+    gen: u64,
+}
 
-	/// The overarching event type.
+//! 128 bit DNA
+//! [0] [1] [2] ... [15] bytes from hash
+//! [0] = star  [Value mod 5] + 1  from 1 to 5
+//! [1] = type  [Value mod 3] + 1  1: Sword, 2: Sniper, 3: Speed
+//! Gundam1 adn 2 generate new one
+//! hash = get_new_hash()
+//! new[0] = (Gundam1 [0] + Gundam2[0])/2;
+//! new[0] = new[0] + providence(); //providence in [-1 , 0 , 1]
+//! if(new[0]) > 5 new[0] = 5
+//! if(new[0]) < 1 new[0] = 1
+//! if(Gundam1[1] == Gundam2[1])
+//! new[1] = Gundam1[1];
+//! else 
+//! new[1] = [Value mod 3] + 1;
+
+pub trait Trait: balances::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
+
+/// The module's configuration trait.
+// pub trait Trait: system::Trait {
+// 	// TODO: Add other types and constants required configure this module.
+
+// 	/// The overarching event type.
+// 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
+// }
 //pub trait Trait: balances::Trait {};
 
 // This module's storage items.
 decl_storage! {
 	trait Store for Module<T: Trait> as AvalonModule {
 		Something get(something): Option<u32>;
-		AvU32: u32;
-        AvBool get(my_bool_getter): bool;
+		AvU32 get(avu32):Option<u32>;
+        AvBool get(my_bool_getter): Option<bool>;
 		//pub ReservedBalance get(reserved_balance): map T::AccountId => T::Balance;
-		AccValue get(acc_bal): map T::AccountId => u32;
+		AccValue get(acc_bal): map T::AccountId => Option<u32>;
+		OwnedGundam get(gundam_of_owner): map T::AccountId => Gundam<T::Hash, T::Balance>;
 	}
 }
 
@@ -54,23 +86,40 @@ decl_module! {
 			Self::deposit_event(RawEvent::SomeU32Stored(something, who));
 			Ok(())
 		}
-		//avalon fn 1
-		pub fn do_avbool(origin, input_bool: bool){
+		//avalon test fn 1
+		pub fn do_avbool(origin, input_bool: bool) -> Result {
 			let who = ensure_signed(origin)?;
-			 <AvBool>::put(input_bool);
+			 AvBool::put(input_bool);
 			 Self::deposit_event(RawEvent::SomeBoolStored(input_bool, who));
+			 Ok(())
 		}
-		//avalon fn 2
-		pub fn do_avu32(origin, input_u32: u32){
+		//avalon test fn 2
+		pub fn do_avu32(origin, input_u32: u32) -> Result {
 			let who = ensure_signed(origin)?;
-			 <AvU32>::put(input_u32);
+			 AvU32::put(input_u32);
 			 Self::deposit_event(RawEvent::SomeU32Stored(input_u32, who));
+			 Ok(())
 		}
-		//avalon fn 3
-		pub fn do_mapu32(origin,input_value: u32){
+		//avalon test fn 3
+		pub fn do_mapu32(origin,input_value: u32) -> Result {
 			let who = ensure_signed(origin)?;
 			 <AccValue<T>>::insert(who,input_value);
+			 Ok(())
 		}
+		//avalon fn 1
+		pub fn create_gundam(origin) -> Result {
+            let sender = ensure_signed(origin)?;
+
+            let zaku = Gundam {
+                id: <T as system::Trait>::Hashing::hash_of(&0),
+                dna: <T as system::Trait>::Hashing::hash_of(&0),
+                price: Zero::zero(),
+                gen: 0,
+            };
+
+            <OwnedGundam<T>>::insert(&sender, zaku);
+            Ok(())
+        }
 	}
 }
 
