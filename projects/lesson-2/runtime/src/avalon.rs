@@ -16,9 +16,11 @@ use sr_primitives::traits::{Hash, Zero};
 // NOTE: We have added this struct template for you
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
-pub struct Gundam<Hash> {
+pub struct Gundam<Hash,Balance> {
 	id: Hash,
     dna: Hash,
+	price: Balance,
+    gen: u64,
 }
 /*
 128 bit DNA
@@ -42,7 +44,7 @@ new[1] = Gundam1[1];
 else 
 new[1] = [Value mod 3] + 1;
 */
-pub trait Trait: system::Trait {
+pub trait Trait: balances::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
@@ -64,7 +66,7 @@ decl_storage! {
 		//pub ReservedBalance get(reserved_balance): map T::AccountId => T::Balance;
 		AccValue get(acc_bal): map T::AccountId => Option<u32>;
 		//
-		Gundams get(gundam): map T::Hash => Gundam<T::Hash>;
+		Gundams get(gundam): map T::Hash => Gundam<T::Hash, T::Balance>;
 		GundamOwner get(owner_of): map T::Hash => Option<T::AccountId>;
 
         AllGundamsArray get(gundam_by_index): map u64 => T::Hash;
@@ -135,6 +137,8 @@ decl_module! {
             let zaku = Gundam {
                 id: random_hash,
                 dna: random_hash,
+				price: Zero::zero(),
+				gen:0
             };
 
 			<Gundams<T>>::insert(random_hash, zaku);
@@ -147,16 +151,32 @@ decl_module! {
             <OwnedGundam<T>>::insert(&sender, random_hash);
 
             Nonce::mutate(|n| *n += 1);
+			Self::deposit_event(RawEvent::Created(sender, random_hash));
             Ok(())
         }
 	}
 }
 
+/*
+ pub enum Event<T>
+    where
+        <T as system::Trait>::AccountId,
+        <T as system::Trait>::Hash
+    {
+        Created(AccountId, Hash),
+    }
+*/
+
 decl_event!(
-	pub enum Event<T> where AccountId = <T as system::Trait>::AccountId {
+	pub enum Event<T> 
+		where 
+			AccountId = <T as system::Trait>::AccountId,
+			<T as system::Trait>::Hash
+		{
 		// Just a dummy event.
 		// Event `Something` is declared with a parameter of the type `u32` and `AccountId`
 		// To emit this event, we call the deposit funtion, from our runtime funtions
+		Created(AccountId, Hash),
 		SomeBoolStored(bool, AccountId),
 		SomeU32Stored(u32, AccountId),
 	}
