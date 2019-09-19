@@ -1,5 +1,5 @@
 [package]
-authors = ['Bryan Chen']
+authors = ['Bryan Chen', 'ximinchao']
 build = 'build.rs'
 edition = '2018'
 name = 'substrate-kitties'
