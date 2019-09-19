@@ -19,8 +19,10 @@ decl_storage! {
     trait Store for Module<T: Trait> as KittyStorage {
         TestValue get(getTestValue): u64;
         MyValue: map T::AccountId => u64;
-        KittyCount get(getKittyCount): map T::AccountId => u32;
-        MyKitties get(getKitties): map (T::AccountId, u32) => Kitty;
+        KittyCount: map T::AccountId => u64;
+        MyKitties get(getKitties): map (T::AccountId, u64) => Option<Kitty<T::Hash, T::Balance>>;
+
+        Nonce: u64;
     }
 }
 
@@ -39,28 +41,28 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             let hash_of_zero = <T as system::Trait>::Hashing::hash_of(&0);
-            let my_zero_balance: T::Balance = 0u8;
-
-            let current_kitty_count = match <KittyCount<T>>::get(sender);
-            let new_kitty_count = current_kitty_count.checked_add(1).ok_or("Overflow adding kitty count")?;
+            let my_zero_balance = T::Balance::from(0u32);
 
             let new_kitty = Kitty {
                 id: hash_of_zero,
                 dna: hash_of_zero,
                 price: my_zero_balance,
-                gen: current_kitty_count,
+                gen: 0,
             };
 
-            <MyKitties<T>>::insert(sender, new_kitty);
-            <KittyCount<T>>::insert(sender, new_kitty_count);
+            //because of owner issue, the idea of (accout, id) is not finished yet
+            <MyKitties<T>>::insert((sender, 0), new_kitty);
+
+            //use Nonce as random seed?
+            //Nonce
+
+            //<MyKitties<T>>::insert((sender, new_kitty_count), new_kitty);
+            //<KittyCount<T>>::insert(sender, new_kitty_count);
 
             Ok(())
         }
 
-        fn removeKitty(origin, gen: u32) -> Result {
-            let sender = ensure_signed(origin)?;
-
-            <MyKitties<T>>::remove(sender);
+        fn removeKitty(origin, gen: u64) -> Result {
 
             Ok(())
         }
