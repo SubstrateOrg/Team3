@@ -258,6 +258,7 @@ impl template::Trait for Runtime {
 }
 
 impl kitties::Trait for Runtime {
+	type Event = Event;
 }
 
 construct_runtime!(
