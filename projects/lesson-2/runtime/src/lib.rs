@@ -1,4 +1,4 @@
-//! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
+//! The Substrate Node substratekitties runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -61,8 +61,8 @@ pub type Hash = primitives::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
-/// Used for the module template in `./template.rs`
-mod template;
+/// Used for the module substratekitties in `./substratekitties.rs`
+mod substratekitties;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -94,8 +94,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("substrate-kitties"),
-	impl_name: create_runtime_str!("substrate-kitties"),
+	spec_name: create_runtime_str!("substratekitties"),
+	impl_name: create_runtime_str!("substratekitties"),
 	authoring_version: 3,
 	spec_version: 4,
 	impl_version: 4,
@@ -235,6 +235,7 @@ impl balances::Trait for Runtime {
 	type OnNewAccount = Indices;
 	/// The ubiquitous event type.
 	type Event = Event;
+
 	type TransactionPayment = ();
 	type DustRemoval = ();
 	type TransferPayment = ();
@@ -251,8 +252,8 @@ impl sudo::Trait for Runtime {
 	type Proposal = Call;
 }
 
-/// Used for the module template in `./template.rs`
-impl template::Trait for Runtime {
+/// Used for the module substratekitties in `./substratekitties.rs`
+impl substratekitties::Trait for Runtime {
 	type Event = Event;
 }
 
@@ -267,10 +268,10 @@ construct_runtime!(
 		Babe: babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
 		Grandpa: grandpa::{Module, Call, Storage, Config, Event},
 		Indices: indices::{default, Config<T>},
-		Balances: balances::{default, Error},
+		Balances: balances,
 		Sudo: sudo,
-		// Used for the module template in `./template.rs`
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		// Used for the module substratekitties in `./substratekitties.rs`
+		substratekitties: substratekitties::{Module, Call, Storage, Event<T>},
 	}
 );
 
