@@ -39,34 +39,67 @@ decl_event!(
 
 decl_storage! {
     trait Store for Module<T: Trait> as KittyStorage {
-        // kitty 实例
-        Kitties get(kitty): map T::Hash => Kitty<T::Hash, T::Balance>;
-        // 拥有kitty的用户
-        KittyOwner get(owner_of): map T::Hash => Option<T::AccountId>;
-        // 多只 kitty
-        KittiesArray get(kitty_by_index): map u64 => T::Hash;
-        // 猫的数量
-        KittiesCount get(all_kitties_count): u64;
-        // 绑定拥有者与 kitty 列表
-        OwnedKittiesArray get(kitty_of_owner_by_index): map (T::AccountId, u64) => T::Hash;
-        // 绑定拥有者与 kitty 数量
-        OwnedKittiesCount get(owned_kitty_count): map T::AccountId => u64;
-
+//         字典类型，k为用户标识，v为kitty的列表（vec表示）
+//         示例
+//        {
+//            "accountId_1": ["catX", "cat(X+1)",...],
+//            "accountId_2": ["catY", "cat(Y+1)",...],
+//              ...
+//        }
+        OwnerRelationWithKitties get(owner_relation_with_kitties): map (T::AccountId, u64) => Vec<Kitty>;
+        KittiesCount get(kitties_count): u64;
     }
 }
 
 decl_module! {
+    // 以下代码为思路，不可直接运行
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
+//        创建kitty
         fn create_kitty(origin) -> Result {
-//            创建dna 并判断是否存在（防止重复）
-//              dna = new dna code
-//              while result = judge_exist(dna) until result = False
-//            创建新的 kitty 并设置dna、价格（默认给定值），然后存储
-//              new_kitty = Kitty{id, dna, price}
-//              add new_kitty to Kitties
-//            将新 kitty 与拥有者进行绑定，并更新拥有者 kitty 的数量信息
-//              update count and return OK
+
+            let sender = ensure_signed(origin)?;
+            let random_hash = String::from("此处应随机生成唯一序列用户kitty的唯一性区分");
+            let new_kitty = Kitty {
+                id: random_hash,
+                dna: random_hash,
+                price: <T::Balance as As<u64>>::sa(0),
+            };
+
+            let kitties: Vec<Kitty> = OwnerRelationWithKitties::get(sender.clone);
+
+            if kitties {
+                // 存在则进行更新
+                // 在原有kitty列表中添加新kitty
+                kitties.push(new_kitty);
+                // 更新原有用户中的kitty列表
+                OwnerRelationWithKitties::update(sender.clone, kitties);
+            } else {
+                // 创建kitty列表
+                let firstKitty = vec![new_kitty];
+                // 将kitty列表与用户首次绑定
+                OwnerRelationWithKitties::insert(sender.clone, firstKitty);
+            }
+
+            // 更新kitty总数
+            let kitties_count = Self::kitties_count();
+            let new_kitties_count = kitties_count.checked_add(1).ok_or("error message")?;
+            KittiesCount::put(new_kitties_count);
+        }
+
+        // 获取kitty数量
+        fn get_kitty_count(origin) -> Result {
+            let sender = ensure_signed(origin)?;
+            let kitties: Vec<Kitty> = OwnerRelationWithKitties::get(sender.clone);
+            let kitties_count = Self::kitties_count();
+
+            print("kitty 总数" + kitties_count)
+            print("用户" + sender + "拥有" + kitties.len() + " kitty");
+
+            // 以下用于输出所有用户kitty数量
+            for (k, v) in owner_relation_with_kitties.iter() {
+                print("用户" + k + "拥有" + item.len() + " kitty");
+            }
         }
     }
 }
