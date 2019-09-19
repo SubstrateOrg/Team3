@@ -2,12 +2,14 @@ use support::{decl_storage, decl_module,StorageValue, StorageMap, dispatch::Resu
 use system::ensure_signed;
 use sr_primitives::traits::{Hash,Zero};
 use codec::{Encode, Decode};
+use runtime_io::blake2_128;
+use byteorder::{ByteOrder, LittleEndian};
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct Kitty<Hash, Balance> {
     id: Hash,
-    dna: Hash,
+    dna: u128,
     price: Balance,
     gen: u64,
 }
@@ -52,9 +54,15 @@ decl_module! {
             let random_seed = <system::Module<T>>::random_seed();
             let new_id = (random_seed, &sender, nonce).using_encoded(<T as system::Trait>::Hashing::hash);
 
+            let dna_buf = (random_seed,
+                       <system::Module<T>>::block_number(),
+                       nonce,
+                       sender.clone()).using_encoded(blake2_128);
+            let dna = LittleEndian::read_u128(&dna_buf);
+
             let new_kitty = Kitty {
                 id: new_id,
-                dna: new_id,
+                dna: dna,
                 price: Zero::zero(),
                 gen: 0,
             };
