@@ -12,6 +12,7 @@ use support::{decl_module, decl_storage, decl_event, StorageValue, StorageMap,di
 use system::ensure_signed;
 use codec::{Codec, Encode, Decode};
 use sr_primitives::traits::{Hash, Zero};
+use rstd::cmp;
 
 // NOTE: We have added this struct template for you
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
@@ -132,30 +133,70 @@ decl_module! {
                 .ok_or("Overflow adding a new gundam to total supply")?;
 
             let nonce = Nonce::get();
-            let random_hash = (<system::Module<T>>::random_seed(), &sender, nonce)
+            let mut random_hash = (<system::Module<T>>::random_seed(), &sender, nonce)
                 .using_encoded(<T as system::Trait>::Hashing::hash);
+
+			let mut dna = random_hash;
+			
+			dna.as_mut()[0] = random_hash.as_mut()[0]%5 + 1; //stars
+			dna.as_mut()[1] = random_hash.as_mut()[1]%3 + 1; //type
 
             ensure!(!<GundamOwner<T>>::exists(random_hash), "Gundam already exists");
 
             let zaku = Gundam {
                 id: random_hash,
-                dna: random_hash,
+                dna: dna,
 				price: Zero::zero(),
 				gen:0
             };
 
-			// <Gundams<T>>::insert(random_hash, zaku);
-			// <GundamOwner<T>>::insert(random_hash, &sender);
-
-            // <AllGundamsArray<T>>::insert(all_gundams_count, random_hash);
-            // AllGundamsCount::put(new_all_gundams_count);
-            // <AllGundamsIndex<T>>::insert(random_hash, all_gundams_count);
-
-            // <OwnedGundam<T>>::insert(&sender, random_hash);
-
-            // Nonce::mutate(|n| *n += 1);
-			// Self::deposit_event(RawEvent::Created(sender, random_hash));
 			Self::check_and_save(sender, random_hash, zaku)?;
+            Ok(())
+        }
+
+		fn breed_gundam(origin, gundam_id_1: T::Hash, gundam_id_2: T::Hash) -> Result{
+            let sender = ensure_signed(origin)?;
+
+            ensure!(<Gundams<T>>::exists(gundam_id_1), "This gundam 1 does not exist");
+            ensure!(<Gundams<T>>::exists(gundam_id_2), "This gundam 2 does not exist");
+
+			let nonce = Nonce::get();
+            let random_hash = (<system::Module<T>>::random_seed(), &sender, nonce)
+                .using_encoded(<T as system::Trait>::Hashing::hash);
+
+			Nonce::mutate(|n| *n += 1);
+            
+			let nonce2 = Nonce::get();
+
+            let mut final_dna = (<system::Module<T>>::random_seed(), &sender, nonce2)
+                .using_encoded(<T as system::Trait>::Hashing::hash);
+
+            let gundam_1 = Self::gundam(gundam_id_1);
+            let gundam_2 = Self::gundam(gundam_id_2);
+
+			//stars
+			let stars = (gundam_1.dna.as_ref()[0] + gundam_2.dna.as_ref()[0])/2;
+			let mut tp = 0;
+			//type
+			if gundam_1.dna.as_ref()[1] == gundam_2.dna.as_ref()[1]
+				{tp = gundam_1.dna.as_ref()[1];}
+			else
+				{tp = final_dna.as_ref()[1] % 3 +1;}
+
+			final_dna.as_mut()[0] = stars;
+			final_dna.as_mut()[1] = tp;
+
+            let Gin = Gundam {
+                id: random_hash,
+                dna: final_dna,
+                price: Zero::zero(),
+                gen: cmp::max(gundam_1.gen, gundam_2.gen) + 1,
+            };
+
+            Self::check_and_save(sender, random_hash, Gin)?;
+
+            Nonce::mutate(|n| *n += 1);
+
             Ok(())
         }
 	}
