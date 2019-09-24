@@ -18,28 +18,6 @@ use rstd::result;
 // NOTE: We have added this struct template for you
 #[derive(Encode, Decode)]
 pub struct Gundam(pub [u8; 16]);
-/*
-128 bit DNA
-[0] [1] [2] ... [15] bytes from random hash
-[0] = stars  [Value mod 5] + 1  from 1 to 5
-# level
-# want to make  5 starts harder to get then 1
-[1] = type   [Value mod 3] + 1  
-# 1: Sword, 2: Sniper, 3: Speed 
-# Speed weak sniper, Sniper weak Sword, Sword weak Speed. 
-# ref 'weak' in FGO, not resist
-# how about a 'duel function' for two gundams fight, loser deleted
-Gundam1 adn 2 generate new one
-hash = get_new_hash()
-new[0] = (Gundam1 [0] + Gundam2[0])/2;
-new[0] = new[0] + providence(); //providence in [-1 , 0 , 1]
-if(new[0]) > 5 new[0] = 5
-if(new[0]) < 1 new[0] = 1
-if(Gundam1[1] == Gundam2[1])
-new[1] = Gundam1[1];
-else 
-new[1] = [Value mod 3] + 1;
-*/
 
 pub trait Trait: system::Trait {
 	type GundamNumber: Parameter + SimpleArithmetic + Bounded + Default + Copy;
@@ -69,20 +47,7 @@ decl_module! {
 		///Create new
 		pub fn create_gundam(origin){
             let sender = ensure_signed(origin)?;
-			let new_gundam_index = Self::next_id()?;
-			
-
-			let payload = (<system::Module<T>>::random_seed(),&sender,<system::Module<T>>::extrinsic_index(),<system::Module<T>>::block_number());
-			let dna = payload.using_encoded(blake2_128);
-
-			let gundam = Gundam(dna);
-			<Gundams<T>>::insert(new_gundam_index,gundam);
-			<GundamsCount<T>>::put(new_gundam_index+1.into());
-
-			let user_gundams_id = Self::owned_gundam_count(&sender);
-			<OwnedGundams<T>>::insert((sender.clone(),user_gundams_id),user_gundams_id);
-			<OwnedGundamCount<T>>::insert(sender,user_gundams_id+1.into());
-
+			Self::do_create(sender)?;
         }
 		//Combine to getnew
 		pub fn breed(origin,gundam_id_1:T::GundamNumber,gundam_id_2:T::GundamNumber){
@@ -107,7 +72,24 @@ impl<T: Trait> Module<T> {
 		payload.using_encoded(blake2_128)
 	}
 
-	fn gen_dna(rng:&mut [u8]) -> [u8;16]{
+	// 128 bit DNA
+	// [0] [1] [2] ... [15] bytes from random hash
+	// [0] = stars  [Value mod 5] + 1  from 1 to 5
+	// # level
+	// # want to make  5 starts harder to get then 1
+	// [1] = type   [Value mod 3] + 1  
+	// # 1: Sword, 2: Sniper, 3: Speed 
+	// # Speed weak sniper, Sniper weak Sword, Sword weak Speed. 
+	// # ref 'weak' in FGO, not resist
+	// # how about a 'duel function' for two gundams fight, loser deleted
+	// Gundam1 adn 2 generate new one
+	// hash = get_new_hash()
+	// new[0] = (Gundam1 [0] + Gundam2[0])/2;
+	// if(Gundam1[1] == Gundam2[1])
+	// new[1] = Gundam1[1];
+	// else 
+	// new[1] = [Value mod 3] + 1;
+	fn gen_dna(rng:&[u8]) -> [u8;16]{
 		let mut dna:[u8;16] = [0u8;16];
 		let i = 0;
 		while i<16 {
@@ -143,6 +125,16 @@ impl<T: Trait> Module<T> {
 		<OwnedGundams<T>>::insert((owner.clone(),user_gundams_id),user_gundams_id);
 		<OwnedGundamCount<T>>::insert(owner,user_gundams_id+1.into());
 	}
+
+	fn do_create(owner:T::AccountId)->Result{
+		let new_gundam_index = Self::next_id()?;
+		let rng = Self::random_value(&owner);
+		let dna = Self::gen_dna(&rng);
+		let gundam = Gundam(dna);
+		Self::check_and_save(owner,new_gundam_index,gundam);
+		Ok(())
+	}
+
 	fn do_breed(owner:T::AccountId, gundam_id_1:T::GundamNumber, gundam_id_2:T::GundamNumber) -> Result{
 		let gundam1 = Self::gundam(gundam_id_1);
 		let gundam2 = Self::gundam(gundam_id_2);
