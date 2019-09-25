@@ -34,7 +34,7 @@ decl_module! {
 
 			// 作业：重构create方法，避免重复代码
 
-			let kitty_id = Self::kitties_count();
+			/*let kitty_id = Self::kitties_count();
 			if kitty_id == T::KittyIndex::max_value() {
 				return Err("Kitties count overflow");
 			}
@@ -51,7 +51,16 @@ decl_module! {
 			// Store the ownership information
 			let user_kitties_id = Self::owned_kitties_count(&sender);
 			<OwnedKitties<T>>::insert((sender.clone(), user_kitties_id), kitty_id);
-			<OwnedKittiesCount<T>>::insert(sender, user_kitties_id + 1.into());
+			<OwnedKittiesCount<T>>::insert(sender, user_kitties_id + 1.into());*/
+
+			let kitty_id = Self::next_kitty_id()?;
+
+			// Generate a random 128bit value
+			let dna = Self::random_value(&sender);
+
+			// Create and store kitty
+			let kitty = Kitty(dna);
+			Self::insert_kitty(&sender, kitty_id, kitty);
 		}
 
 		/// Breed kitties
@@ -59,6 +68,16 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 
 			Self::do_breed(sender, kitty_id_1, kitty_id_2)?;
+		}
+
+		/// Transfer an owned kitty
+		fn do_transfer(from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex)  {
+			let sender = ensure_signed(origin)?;
+
+			let kitty = Self::kitties(id);
+			ensure!(kitty.owner == owner, "Only owner can transfer his kitty");
+
+			Self::do_transfer(&sender, &to, kitty_id);
 		}
 	}
 }
@@ -69,7 +88,10 @@ fn combine_dna(dna1: u8, dna2: u8, selector: u8) -> u8 {
 	// selector.map_bits(|bit, index| if (bit == 1) { dna1 & (1 << index) } else { dna2 & (1 << index) })
 	// 注意 map_bits这个方法不存在。只要能达到同样效果，不局限算法
 	// 测试数据：dna1 = 0b11110000, dna2 = 0b11001100, selector = 0b10101010, 返回值 0b11100100
-	return dna1;
+	let dna1 = selector & dna1;
+	let dna2 = !selector & dna2;
+
+	dna1 | dna2
 }
 
 impl<T: Trait> Module<T> {
@@ -120,6 +142,14 @@ impl<T: Trait> Module<T> {
 		}
 
 		Self::insert_kitty(sender, kitty_id, Kitty(new_dna));
+
+		Ok(())
+	}
+
+	fn do_transfer(from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex) -> Result {
+		<OwnedKittiesList<T>>::remove(&from, kitty_id);
+		<OwnedKittiesList<T>>::append(&to, kitty_id);
+		<KittyOwners<T>>::insert(kitty_id, to);
 
 		Ok(())
 	}
