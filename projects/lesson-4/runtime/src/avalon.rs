@@ -12,7 +12,7 @@ use support::{decl_module, decl_storage, StorageValue, ensure,StorageMap,dispatc
 use system::ensure_signed;
 use codec::{ Encode, Decode};
 use sr_primitives::traits::{SimpleArithmetic, Bounded};
-use runtime_io::blake2_128;
+use runtime_io::{blake2_128,print};
 use rstd::result;
 
 // NOTE: We have added this struct template for you
@@ -45,12 +45,14 @@ decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
 
 		///Create new
-		pub fn create_gundam(origin){
+		pub fn create(origin){
+			print("enter  create");
             let sender = ensure_signed(origin)?;
 			Self::do_create(sender)?;
         }
 		//Combine to getnew
 		pub fn breed(origin,gundam_id_1:T::GundamNumber,gundam_id_2:T::GundamNumber){
+			print("enter  breed");
 			let sender = ensure_signed(origin)?;
 			Self::do_breed(sender,gundam_id_1,gundam_id_2)?;
 		}
@@ -91,9 +93,10 @@ impl<T: Trait> Module<T> {
 	// new[1] = [Value mod 3] + 1;
 	fn gen_dna(rng:&[u8]) -> [u8;16]{
 		let mut dna:[u8;16] = [0u8;16];
-		let i = 0;
+		let mut i = 0;
 		while i<16 {
 			dna[i] = rng[i];
+			i = i + 1; 
 		}
 		dna[0] = rng[0]%5 + 1;
 		dna[1] = rng[1]%3 + 1;
@@ -103,9 +106,10 @@ impl<T: Trait> Module<T> {
 
 	fn combine_dna(dna1:&[u8], dna2:&[u8], rng:&[u8]) -> [u8;16]{
 		let mut dna:[u8;16] = [0u8;16];
-		let i = 0;
+		let mut i = 0;
 		while i<16 {
 			dna[i] = rng[i];
+			i = i + 1; 
 		}
 		dna[0] = ( dna1[0] + dna2[0] )/2;
 		if dna1[1] == dna2[1]{
@@ -121,13 +125,15 @@ impl<T: Trait> Module<T> {
 		<Gundams<T>>::insert(gundam_id,gundam);
 		<GundamsCount<T>>::put(gundam_id+1.into());
 
-		let user_gundams_id = Self::owned_gundam_count(&owner);
+		let user_gundams_id = Self::owned_gundam_count(owner.clone());
 		<OwnedGundams<T>>::insert((owner.clone(),user_gundams_id),user_gundams_id);
 		<OwnedGundamCount<T>>::insert(owner,user_gundams_id+1.into());
 	}
 
 	fn do_create(owner:T::AccountId)->Result{
+		print("enter do create");
 		let new_gundam_index = Self::next_id()?;
+		print("next_id id");
 		let rng = Self::random_value(&owner);
 		let dna = Self::gen_dna(&rng);
 		let gundam = Gundam(dna);
@@ -136,6 +142,7 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn do_breed(owner:T::AccountId, gundam_id_1:T::GundamNumber, gundam_id_2:T::GundamNumber) -> Result{
+		print("enter do do_breed");
 		let gundam1 = Self::gundam(gundam_id_1);
 		let gundam2 = Self::gundam(gundam_id_2);
 		ensure!(gundam1.is_some(),"Invalid gundam1");
