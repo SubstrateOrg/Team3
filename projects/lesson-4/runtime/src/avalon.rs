@@ -28,6 +28,8 @@ decl_storage! {
 	trait Store for Module<T: Trait> as AvalonModule {
 		/// Store all gundams, key is index
 		pub Gundams get(gundam): map T::GundamNumber => Option<Gundam>;
+		/// get Owner of gundam
+		pub GundamOwner get(owner_of): map T::GundamNumber =>Option<T::AccountId> ;
 		/// Store gundam count
 		pub GundamsCount get(gundams_count): T::GundamNumber;
 
@@ -56,6 +58,12 @@ decl_module! {
 			let sender = ensure_signed(origin)?;
 			Self::do_breed(sender,gundam_id_1,gundam_id_2)?;
 		}
+		pub fn transfer(origin,to:T::AccountId,gundam_id:T::GundamNumber){
+			print("enter  transfer");
+			let sender = ensure_signed(origin)?;
+			Self::do_transfer(sender,to,gundam_id)?;
+		}
+
 	}
 }
 
@@ -123,6 +131,7 @@ impl<T: Trait> Module<T> {
 	}
 	fn check_and_save(owner:T::AccountId, gundam_id:T::GundamNumber, gundam:Gundam){
 		<Gundams<T>>::insert(gundam_id,gundam);
+		<GundamOwner<T>>::insert(gundam_id,owner.clone());
 		<GundamsCount<T>>::put(gundam_id+1.into());
 
 		let user_gundams_id = Self::owned_gundam_count(owner.clone());
@@ -157,6 +166,22 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
+	fn do_transfer(sender:T::AccountId, to:T::AccountId, gundam_id:T::GundamNumber)->Result{
+		let gundam = Self::gundam(gundam_id);
+		ensure!(gundam.is_some(),"Invalid gundam");
 
+		let owner = Self::owner_of(gundam_id).ok_or("No owner for this gundam")?;
+		ensure!(owner == sender, "You do not own this gundam");
+
+		<OwnedGundams<T>>::remove((sender.clone(),gundam_id));
+		<OwnedGundamCount<T>>::insert(sender,gundam_id-1.into());
+		<GundamOwner<T>>::remove(gundam_id);
+
+		<OwnedGundams<T>>::insert((to.clone(),gundam_id),gundam_id);
+		<OwnedGundamCount<T>>::insert(to.clone(),gundam_id+1.into());
+		<GundamOwner<T>>::insert(gundam_id,to);
+	
+		Ok(())
+	}
 
 }
