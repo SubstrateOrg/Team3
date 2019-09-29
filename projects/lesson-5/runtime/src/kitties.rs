@@ -27,6 +27,11 @@ decl_storage! {
 		pub KittiesCount get(kitties_count): T::KittyIndex;
 
 		pub OwnedKitties get(owned_kitties): map (T::AccountId, Option<T::KittyIndex>) => Option<KittyLinkedItem<T>>;
+
+		pub KittiesPrice get(kitties_price): map (T::AccountId, Option<T::KittyIndex>) => u32;
+
+		/// 用户资产
+		pub OwnedAssets get(owned_assets): map T::AccountId => u32;
 	}
 }
 
@@ -52,9 +57,53 @@ decl_module! {
 			Self::do_breed(&sender, kitty_id_1, kitty_id_2)?;
 		}
 
-		// 作业：实现 transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex)
-		// 使用 ensure! 来保证只有主人才有权限调用 transfer
-		// 使用 OwnedKitties::append 和 OwnedKitties::remove 来修改小猫的主人
+		pub fn transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
+			// 作业：实现 transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex)
+			let sender = ensure_signed(origin)?;
+
+			// 使用 ensure! 来保证只有主人才有权限调用 transfer
+			let old_own_kitty = <OwnedKitties<T>>::read(&sender, Some(kitty_id));
+			ensure!(old_own_kitty.prev == None && old_own_kitty.next == None, "未在原主人下查询到此猫");
+
+			// 使用 OwnedKitties::append 和 OwnedKitties::remove 来修改小猫的主人
+			<OwnedKitties<T>>::append(&to, kitty_id);
+			<OwnedKitties<T>>::remove(&sender, kitty_id);
+		}
+
+		pub fn set_price(origin, kitty_id: T::KittyIndex, price: u32) {
+			// 给自己的小猫设定价钱
+			let sender = ensure_signed(origin)?;
+
+			ensure!(price < 0, "价格应大于0");
+
+			let kitty = Self::kitty(kitty_id);
+
+			ensure!(kitty.is_some(), "Invalid kitty");
+
+			<KittiesPrice<T>>::insert((sender, Some(kitty_id)), price);
+		}
+
+
+		pub fn buy_kitty(origin, from: T::AccountId, kitty_id: T::KittyIndex) {
+			// 购买其他人的小猫
+			let sensor = ensure_signed(origin)?;
+
+			let other_kitty = <OwnedKitties<T>>::read(&from, Some(kitty_id));
+
+			let price = <KittiesPrice<T>>::get((from, Some(kitty_id)));
+
+			let assets = Self::owned_assets(&sensor);
+
+			ensure!(assets < price, "资产不够购买");
+
+			// 从原有主人删除
+			<OwnedKitties<T>>::remove(&from, kitty_id); // TODO 此句有报错
+			// 增加至新主人
+			<OwnedKitties<T>>::append(&sensor, kitty_id);
+			<KittiesPrice<T>>::insert((sensor, Some(kitty_id)), price);
+
+		}
+		
 	}
 }
 
@@ -142,6 +191,7 @@ impl<T: Trait> Module<T> {
 
 	fn insert_owned_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex) {
 		// 作业：调用 OwnedKitties::append 完成实现
+		<OwnedKitties<T>>::append(owner, kitty_id);
   	}
 
 	fn insert_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex, kitty: Kitty) {
