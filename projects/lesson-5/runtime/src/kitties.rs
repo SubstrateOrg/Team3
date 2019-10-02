@@ -27,6 +27,12 @@ decl_storage! {
 		pub KittiesCount get(kitties_count): T::KittyIndex;
 
 		pub OwnedKitties get(owned_kitties): map (T::AccountId, Option<T::KittyIndex>) => Option<KittyLinkedItem<T>>;
+
+		// get kitty owner
+		pub KittyOwners get(kitty_owner): map T::KittyIndex => Option<T::AccountId>;
+
+		// get kitty price
+		pub KittyPrices get(kitty_price): map T::KittyIndex => Option<BalanceOf<T>>
 	}
 }
 
@@ -55,6 +61,35 @@ decl_module! {
 		// 作业：实现 transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex)
 		// 使用 ensure! 来保证只有主人才有权限调用 transfer
 		// 使用 OwnedKitties::append 和 OwnedKitties::remove 来修改小猫的主人
+		pub fn transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(<OwnedKitties<T>>::exists(&(sender.clone(), Some(kitty_id))), "Only owner can transfer kitty");
+
+			Self::do_transfer(&sender, &to, kitty_id);
+		}
+
+		// set price for kitty
+		pub fn set_price(origin, kitty_id: T::KittyIndex, price: Option<BalanceOf<T>>) {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(<OwnedKitties<T>>::exists(&(sender.clone(), Some(kitty_id))), "Only owner can set price for kitty");
+
+			Self::do_set_price(kitty_id, price);
+		}
+
+		// buy kitty
+		pub fn buy(origin, kitty_id: T::KittyIndex, price: BalanceOf<T>) {
+			let sender = ensure_signed(origin)?;
+
+			let owner = Self::kitty_owner(kitty_id);
+			ensure!(owner.is_some(), "Kitty does not exist");
+
+			let kitty_price = Self::kitty_price(kitty_id);
+			ensure!(price >= kitty_price, "Price is too low");
+
+			Self::do_buy(&sender, &owner, kitty_id, price);
+		}
 	}
 }
 
@@ -142,6 +177,7 @@ impl<T: Trait> Module<T> {
 
 	fn insert_owned_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex) {
 		// 作业：调用 OwnedKitties::append 完成实现
+		<OwnedKittiesList<T>>::append(owner, kitty_id);
   	}
 
 	fn insert_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex, kitty: Kitty) {
@@ -177,6 +213,28 @@ impl<T: Trait> Module<T> {
 		Self::insert_kitty(sender, kitty_id, Kitty(new_dna));
 
 		Ok(())
+	}
+
+	fn do_transfer(from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex)  {
+		<OwnedKittiesList<T>>::remove(&from, kitty_id);
+		<OwnedKittiesList<T>>::append(&to, kitty_id);
+		<KittyOwners<T>>::insert(kitty_id, to);
+	}
+
+	fn do_set_price(kitty_id: T::KittyIndex, price: Option<BalanceOf<T>>) {
+		if let Some(ref price) = price {
+			<KittyPrices<T>>::insert(kitty_id, price);
+		} else {
+			<KittyPrices<T>>::remove(kitty_id);
+		}
+	}
+
+	fn do_buy(from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex, price: Option<BalanceOf<T>>) {
+		T::Currency::transfer(&from, &to, kitty_price)?;
+
+		<KittyPrices<T>>::remove(kitty_id);
+
+		Self::do_transfer(&to, &from, kitty_id);
 	}
 }
 
