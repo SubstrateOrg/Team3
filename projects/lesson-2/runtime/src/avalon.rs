@@ -73,7 +73,10 @@ decl_storage! {
         AllGundamsCount get(all_gundams_count): u64;
         AllGundamsIndex: map T::Hash => u64;
 
-		OwnedGundam get(gundam_of_owner): map T::AccountId => T::Hash;
+		OwnedGundamsArray get(gundam_of_owner_by_index): map (T::AccountId,u64) => T::Hash;
+		OwnedGundamsCount get(owned_gundam_count): map T::AccountId => u64;
+		OwnedGundamsIndex: map T::Hash => u64;
+
 		Nonce: u64;
 	}
 }
@@ -141,31 +144,22 @@ decl_module! {
 				gen:0
             };
 
-			<Gundams<T>>::insert(random_hash, zaku);
-			<GundamOwner<T>>::insert(random_hash, &sender);
+			// <Gundams<T>>::insert(random_hash, zaku);
+			// <GundamOwner<T>>::insert(random_hash, &sender);
 
-            <AllGundamsArray<T>>::insert(all_gundams_count, random_hash);
-            AllGundamsCount::put(new_all_gundams_count);
-            <AllGundamsIndex<T>>::insert(random_hash, all_gundams_count);
+            // <AllGundamsArray<T>>::insert(all_gundams_count, random_hash);
+            // AllGundamsCount::put(new_all_gundams_count);
+            // <AllGundamsIndex<T>>::insert(random_hash, all_gundams_count);
 
-            <OwnedGundam<T>>::insert(&sender, random_hash);
+            // <OwnedGundam<T>>::insert(&sender, random_hash);
 
-            Nonce::mutate(|n| *n += 1);
-			Self::deposit_event(RawEvent::Created(sender, random_hash));
+            // Nonce::mutate(|n| *n += 1);
+			// Self::deposit_event(RawEvent::Created(sender, random_hash));
+			Self::check_and_save(sender, random_hash, zaku)?;
             Ok(())
         }
 	}
 }
-
-/*
- pub enum Event<T>
-    where
-        <T as system::Trait>::AccountId,
-        <T as system::Trait>::Hash
-    {
-        Created(AccountId, Hash),
-    }
-*/
 
 decl_event!(
 	pub enum Event<T> 
@@ -181,6 +175,43 @@ decl_event!(
 		SomeU32Stored(u32, AccountId),
 	}
 );
+
+impl<T: Trait> Module<T> {
+    fn check_and_save(
+		to: T::AccountId, 
+		gundam_id: T::Hash, 
+		new_gundam: Gundam<T::Hash, T::Balance>) 
+		-> Result {
+        
+		ensure!(!<GundamOwner<T>>::exists(gundam_id), "Gundam already exists");
+
+        let owned_gundam_count = Self::owned_gundam_count(&to);
+
+        let new_owned_gundam_count = owned_gundam_count.checked_add(1)
+            .ok_or("Overflow adding a new gundam to account balance")?;
+
+        let all_gundams_count = Self::all_gundams_count();
+
+        let new_all_gundams_count = all_gundams_count.checked_add(1)
+            .ok_or("Overflow adding a new gundam to total supply")?;
+
+        <Gundams<T>>::insert(gundam_id, new_gundam);
+        <GundamOwner<T>>::insert(gundam_id, &to);
+
+        <AllGundamsArray<T>>::insert(all_gundams_count, gundam_id);
+        AllGundamsCount::put(new_all_gundams_count);
+        <AllGundamsIndex<T>>::insert(gundam_id, all_gundams_count);
+
+        <OwnedGundamsArray<T>>::insert((to.clone(), owned_gundam_count), gundam_id);
+        <OwnedGundamsCount<T>>::insert(&to, new_owned_gundam_count);
+        <OwnedGundamsIndex<T>>::insert(gundam_id, owned_gundam_count);
+
+        Self::deposit_event(RawEvent::Created(to, gundam_id));
+
+        Ok(())
+    }
+}
+
 
 // /// tests for this module
 // #[cfg(test)]
