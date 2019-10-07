@@ -1,13 +1,18 @@
-use support::{decl_module, decl_storage, ensure, StorageValue, StorageMap, dispatch::Result, Parameter};
+use support::{decl_module, decl_storage, ensure, StorageValue, StorageMap, dispatch::Result, Parameter,
+			  traits::Currency};
 use sr_primitives::traits::{SimpleArithmetic, Bounded, Member};
 use codec::{Encode, Decode};
 use runtime_io::blake2_128;
 use system::ensure_signed;
 use rstd::result;
 
-pub trait Trait: system::Trait {
+pub trait Trait: balances::Trait {
 	type KittyIndex: Parameter + Member + SimpleArithmetic + Bounded + Default + Copy;
+	type Currency: Currency<Self::AccountId>;
 }
+
+
+pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as system::Trait>::AccountId>>::Balance;
 
 #[derive(Encode, Decode)]
 pub struct Kitty(pub [u8; 16]);
@@ -27,6 +32,8 @@ decl_storage! {
 		pub KittiesCount get(kitties_count): T::KittyIndex;
 
 		pub OwnedKitties get(owned_kitties): map (T::AccountId, Option<T::KittyIndex>) => Option<KittyLinkedItem<T>>;
+
+		pub KittyPrices get(kitty_price): map T::KittyIndex => Option<BalanceOf<T>>
 	}
 }
 
@@ -52,9 +59,38 @@ decl_module! {
 			Self::do_breed(&sender, kitty_id_1, kitty_id_2)?;
 		}
 
-		// 作业：实现 transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex)
-		// 使用 ensure! 来保证只有主人才有权限调用 transfer
-		// 使用 OwnedKitties::append 和 OwnedKitties::remove 来修改小猫的主人
+		pub fn transfer(origin, to: T::AccountId, kitty_id: T::KittyIndex) {
+			let sender = ensure_signed(origin)?;
+
+			let kitty = Self::kitty(kitty_id);
+			ensure!(kitty.is_some(), "Invalid kitty id");
+ 			ensure!(<OwnedKitties<T>>::exists(&(sender.clone(), Some(kitty_id))), "Only owner can transfer kitty");
+
+ 			Self::transfer_kitty(&sender, &to, kitty_id);
+		}
+
+		pub fn set_price(origin, kitty_id: T::KittyIndex, price: Option<BalanceOf<T>>) {
+			let sender = ensure_signed(origin)?;
+
+			let kitty = Self::kitty(kitty_id);
+			ensure!(kitty.is_some(), "Invalid kitty id");
+ 			ensure!(<OwnedKitties<T>>::exists(&(sender.clone(), Some(kitty_id))), "Only owner can set price for kitty");
+
+ 			Self::set_kitty_price(kitty_id, price);
+		}
+
+ 		// buy kitty
+		pub fn buy(origin, kitty_id: T::KittyIndex, price: BalanceOf<T>) {
+			let sender = ensure_signed(origin)?;
+
+ 			let owner = Self::kitty_owner(kitty_id);
+			ensure!(owner.is_some(), "Kitty does not exist");
+
+ 			let kitty_price = Self::kitty_price(kitty_id);
+			ensure!(price >= kitty_price, "Price is too low");
+
+ 			Self::do_buy(&sender, &owner, kitty_id, price);
+		}
 	}
 }
 
@@ -141,7 +177,11 @@ impl<T: Trait> Module<T> {
 	}
 
 	fn insert_owned_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex) {
-		// 作业：调用 OwnedKitties::append 完成实现
+		if <OwnedKitties<T>>::exists(&(owner.clone(), Some(kitty_id))) {
+			return;
+		}
+
+		<OwnedKitties<T>>::append(owner, kitty_id);
   	}
 
 	fn insert_kitty(owner: &T::AccountId, kitty_id: T::KittyIndex, kitty: Kitty) {
@@ -177,6 +217,27 @@ impl<T: Trait> Module<T> {
 		Self::insert_kitty(sender, kitty_id, Kitty(new_dna));
 
 		Ok(())
+	}
+
+	fn transfer_kitty(from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex)  {
+		<OwnedKitties<T>>::remove(from, kitty_id);
+		<OwnedKitties<T>>::append(to, kitty_id);
+	}
+
+	fn set_kitty_price(kitty_id: T::KittyIndex, price: Option<BalanceOf<T>>) {
+		if let Some(ref price) = price {
+			<KittyPrices<T>>::insert(kitty_id, price);
+		} else {
+			<KittyPrices<T>>::remove(kitty_id);
+		}
+	}
+
+	fn do_buy(from: &T::AccountId, to: &T::AccountId, kitty_id: T::KittyIndex, price: Option<BalanceOf<T>>) {
+		T::Currency::transfer(&from, &to, price);
+
+		<KittyPrices<T>>::remove(kitty_id);
+
+		Self::transfer_kitty(&to, &from, kitty_id);
 	}
 }
 
