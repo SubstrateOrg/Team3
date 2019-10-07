@@ -90,7 +90,9 @@ decl_module! {
 
 			let other_kitty = <OwnedKitties<T>>::read(&from, Some(kitty_id));
 
-			let price = <KittiesPrice<T>>::get((from, Some(kitty_id)));
+			ensure!(other_kitty.prev == None && other_kitty.next == None, "未在原主人下查询到此猫");
+
+			let price = <KittiesPrice<T>>::read(&from, Some(kitty_id));
 
 			let assets = Self::owned_assets(&sensor);
 
@@ -168,6 +170,12 @@ impl<T: Trait> OwnedKitties<T> {
 
   			Self::write(account, item.next, new_next);
 		}
+	}
+}
+
+impl<T: Trait> KittiesPrice<T> {
+	pub fn read(account: &T::AccountId, key: Option<T::KittyIndex>) -> u32{
+		<KittiesPrice<T>>::get((account.clone(), key))
 	}
 }
 
