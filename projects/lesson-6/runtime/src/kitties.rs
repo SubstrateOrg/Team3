@@ -247,8 +247,42 @@ mod tests {
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
 	}
+
+	pub type Balance = u64;
+	pub struct ExistentialDeposit;
+	impl Get<u64> for ExistentialDeposit {
+		fn get() -> u64 {
+			EXISTENTIAL_DEPOSIT.with(|v| *v.borrow())
+		}
+	}
+
+	parameter_types! {
+		pub const TransferFee: Balance = 0;
+		pub const CreationFee: Balance = 0;
+		pub const TransactionBaseFee: u64 = 0;
+		pub const TransactionByteFee: u64 = 0;
+	}
+
+	impl balances::Trait for Test {
+		type Balance = Balance;
+		type OnFreeBalanceZero = Staking;
+		type OnNewAccount = ();
+		type Event = ();
+		type TransactionPayment = ();
+		type TransferPayment = ();
+		type DustRemoval = ();
+		type ExistentialDeposit = ExistentialDeposit;
+		type TransferFee = TransferFee;
+		type CreationFee = CreationFee;
+		type TransactionBaseFee = TransactionBaseFee;
+		type TransactionByteFee = TransactionByteFee;
+		type WeightToFee = ();
+	}
+
 	impl Trait for Test {
 		type KittyIndex = u32;
+		type Event = ();
+		type Currency = balances::Module<Self>;
 	}
 	type OwnedKittiesTest = OwnedKitties<Test>;
 
