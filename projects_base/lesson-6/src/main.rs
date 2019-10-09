@@ -15,9 +15,9 @@ fn main() {
 		name: "Substrate Node",
 		commit: env!("VERGEN_SHA_SHORT"),
 		version: env!("CARGO_PKG_VERSION"),
-		executable_name: "kim-jong-un",
-		author: "longjianjin",
-		description: "Kim_Jong_un",
+		executable_name: "substrate-kitties",
+		author: "Bryan Chen",
+		description: "substrate-kitties",
 		support_url: "support.anonymous.an",
 	};
 

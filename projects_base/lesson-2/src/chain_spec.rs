@@ -1,5 +1,5 @@
 use primitives::{Pair, Public};
-use kim_jong_un_runtime::{
+use substrate_kitties_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, IndicesConfig, SystemConfig, WASM_BINARY, 
 };
