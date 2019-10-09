@@ -1,9 +1,5 @@
 use primitives::{Pair, Public};
-<<<<<<< HEAD
-use kim_jong_un_runtime::{
-=======
 use substrate_kitties_runtime::{
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, IndicesConfig, SystemConfig, WASM_BINARY, 
 };
@@ -59,8 +55,16 @@ impl Alternative {
 				vec![
 					get_from_seed::<AccountId>("Alice"),
 					get_from_seed::<AccountId>("Bob"),
+					get_from_seed::<AccountId>("Charlie"),
+					get_from_seed::<AccountId>("Dave"),
+					get_from_seed::<AccountId>("Eve"),
+					get_from_seed::<AccountId>("Ferdie"),
 					get_from_seed::<AccountId>("Alice//stash"),
 					get_from_seed::<AccountId>("Bob//stash"),
+					get_from_seed::<AccountId>("Charlie//stash"),
+					get_from_seed::<AccountId>("Dave//stash"),
+					get_from_seed::<AccountId>("Eve//stash"),
+					get_from_seed::<AccountId>("Ferdie//stash"),
 				],
 				true),
 				vec![],

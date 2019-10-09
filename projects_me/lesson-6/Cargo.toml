@@ -1,21 +1,3 @@
-<<<<<<< HEAD
-[[bin]]
-name = 'kim-jong-un'
-path = 'src/main.rs'
-[profile.release]
-panic = 'unwind'
-
-[workspace]
-members = ['runtime']
-
-[package]
-authors = ['longjianjin']
-build = 'build.rs'
-edition = '2018'
-name = 'kim-jong-un'
-version = '2.0.0'
-
-=======
 [package]
 authors = ['Bryan Chen']
 build = 'build.rs'
@@ -29,7 +11,6 @@ vergen = '3'
 [workspace]
 members = ['runtime']
 
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 [dependencies]
 derive_more = '0.14.0'
 exit-future = '0.1'
@@ -42,29 +23,17 @@ trie-root = '0.15.2'
 [dependencies.babe]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-consensus-babe'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.babe-primitives]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-consensus-babe-primitives'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.basic-authorship]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-basic-authorship'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.codec]
 package = 'parity-scale-codec'
@@ -77,70 +46,29 @@ version = '3.0'
 [dependencies.grandpa]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-finality-grandpa'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.grandpa-primitives]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-finality-grandpa-primitives'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.inherents]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-inherents'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.network]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-network'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[dependencies.kim-jong-un-runtime]
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
 
 [dependencies.substrate-kitties-runtime]
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 path = 'runtime'
 
 [dependencies.primitives]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-primitives'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[dependencies.sr-io]
-git = 'https://github.com/paritytech/substrate.git'
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[dependencies.substrate-cli]
-git = 'https://github.com/paritytech/substrate.git'
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[dependencies.substrate-client]
-git = 'https://github.com/paritytech/substrate.git'
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[dependencies.substrate-executor]
-git = 'https://github.com/paritytech/substrate.git'
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[dependencies.substrate-service]
-git = 'https://github.com/paritytech/substrate.git'
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
 
 [dependencies.sr-io]
@@ -162,17 +90,10 @@ rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
 [dependencies.substrate-service]
 git = 'https://github.com/paritytech/substrate.git'
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 [dependencies.transaction-pool]
 git = 'https://github.com/paritytech/substrate.git'
 package = 'substrate-transaction-pool'
-<<<<<<< HEAD
-rev = '447e6ea239b7b033c3c440b398d47c567f8874d6'
-
-[build-dependencies]
-vergen = '3'
-=======
 rev = 'ac6a2a783f0e1f4a814cf2add40275730cd41be1'
 
 [[bin]]
@@ -180,4 +101,3 @@ name = 'substrate-kitties'
 path = 'src/main.rs'
 [profile.release]
 panic = 'unwind'
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd

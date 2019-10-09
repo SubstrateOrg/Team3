@@ -64,11 +64,9 @@ pub type DigestItem = generic::DigestItem<Hash>;
 /// Used for the module template in `./template.rs`
 mod template;
 
-<<<<<<< HEAD
-mod kim_jong_un;
+/// Used for the module kitties in `./kitties.rs`
+mod kitties;
 
-=======
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -99,13 +97,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-<<<<<<< HEAD
-	spec_name: create_runtime_str!("kim-jong-un"),
-	impl_name: create_runtime_str!("kim-jong-un"),
-=======
 	spec_name: create_runtime_str!("substrate-kitties"),
 	impl_name: create_runtime_str!("substrate-kitties"),
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 	authoring_version: 3,
 	spec_version: 4,
 	impl_version: 4,
@@ -201,12 +194,6 @@ impl babe::Trait for Runtime {
 	type ExpectedBlockTime = ExpectedBlockTime;
 }
 
-<<<<<<< HEAD
-
-impl kim_jong_un::Trait for Runtime{}
-
-=======
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 impl grandpa::Trait for Runtime {
 	type Event = Event;
 }
@@ -224,7 +211,7 @@ impl indices::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const MinimumPeriod: u64 = 5000;
+	pub const MinimumPeriod: u64 = 1000;
 }
 
 impl timestamp::Trait for Runtime {
@@ -251,10 +238,6 @@ impl balances::Trait for Runtime {
 	type OnNewAccount = Indices;
 	/// The ubiquitous event type.
 	type Event = Event;
-<<<<<<< HEAD
-
-=======
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 	type TransactionPayment = ();
 	type DustRemoval = ();
 	type TransferPayment = ();
@@ -276,6 +259,10 @@ impl template::Trait for Runtime {
 	type Event = Event;
 }
 
+impl kitties::Trait for Runtime {
+	type KittyIndex = u32;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -287,18 +274,12 @@ construct_runtime!(
 		Babe: babe::{Module, Call, Storage, Config, Inherent(Timestamp)},
 		Grandpa: grandpa::{Module, Call, Storage, Config, Event},
 		Indices: indices::{default, Config<T>},
-<<<<<<< HEAD
-		Balances: balances,
-		Sudo: sudo,
-		// Used for the module template in `./template.rs`
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
-		kim_jong_un: kim_jong_un::{Module,}
-=======
 		Balances: balances::{default, Error},
 		Sudo: sudo,
 		// Used for the module template in `./template.rs`
 		TemplateModule: template::{Module, Call, Storage, Event<T>},
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
+		// Substrate Kitties module
+		Kitties: kitties::{Module, Storage, Call},
 	}
 );
 

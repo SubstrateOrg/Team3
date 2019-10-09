@@ -6,11 +6,7 @@ use substrate_client::LongestChain;
 use babe::{import_queue, start_babe, Config};
 use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
 use futures::prelude::*;
-<<<<<<< HEAD
-use kim_jong_un_runtime::{self, GenesisConfig, opaque::Block, RuntimeApi, WASM_BINARY};
-=======
-use substrate_kitties_runtime::{self, GenesisConfig, opaque::Block, RuntimeApi, WASM_BINARY};
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
+use substrate_kitties_runtime::{self, GenesisConfig, opaque::Block, RuntimeApi};
 use substrate_service::{error::{Error as ServiceError}, AbstractService, Configuration, ServiceBuilder};
 use transaction_pool::{self, txpool::{Pool as TransactionPool}};
 use inherents::InherentDataProviders;
@@ -21,13 +17,8 @@ pub use substrate_executor::NativeExecutor;
 // Our native executor instance.
 native_executor_instance!(
 	pub Executor,
-<<<<<<< HEAD
-	kim_jong_un_runtime::api::dispatch,
-	kim_jong_un_runtime::native_version
-=======
 	substrate_kitties_runtime::api::dispatch,
 	substrate_kitties_runtime::native_version
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 );
 
 construct_simple_protocol! {
@@ -46,11 +37,7 @@ macro_rules! new_full_start {
 		let mut tasks_to_spawn = None;
 
 		let builder = substrate_service::ServiceBuilder::new_full::<
-<<<<<<< HEAD
-			kim_jong_un_runtime::opaque::Block, kim_jong_un_runtime::RuntimeApi, crate::service::Executor
-=======
 			substrate_kitties_runtime::opaque::Block, substrate_kitties_runtime::RuntimeApi, crate::service::Executor
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 		>($config)?
 			.with_select_chain(|_config, backend| {
 				Ok(substrate_client::LongestChain::new(backend.clone()))
@@ -62,11 +49,7 @@ macro_rules! new_full_start {
 				let select_chain = select_chain.take()
 					.ok_or_else(|| substrate_service::Error::SelectChainRequired)?;
 				let (block_import, link_half) =
-<<<<<<< HEAD
-					grandpa::block_import::<_, _, _, kim_jong_un_runtime::RuntimeApi, _, _>(
-=======
 					grandpa::block_import::<_, _, _, substrate_kitties_runtime::RuntimeApi, _, _>(
->>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 						client.clone(), client.clone(), select_chain
 					)?;
 				let justification_import = block_import.clone();

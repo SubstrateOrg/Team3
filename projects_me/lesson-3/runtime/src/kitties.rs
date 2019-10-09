@@ -2,8 +2,11 @@ use support::{decl_module, decl_storage, StorageValue, StorageMap};
 use codec::{Encode, Decode};
 use runtime_io::blake2_128;
 use system::ensure_signed;
+<<<<<<< HEAD
 use rstd::cmp;
 
+=======
+>>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 
 pub trait Trait: system::Trait {
 }
@@ -35,6 +38,7 @@ decl_module! {
 			Kitties::insert(count, kitty);
 			KittiesCount::put(count + 1);
 		}
+<<<<<<< HEAD
 
 
 		fn breed_kitty(origin, kitty_id_1: T::Hash, kitty_id_2: T::Hash) -> Result{
@@ -67,5 +71,7 @@ decl_module! {
             Self::mint(sender, random_hash, new_kitty)?;
 
             <Nonce<T>>::mutate(|n| *n += 1);
+=======
+>>>>>>> 45da911e27a064a32e24c60aafd7ec0f807773bd
 	}
 }
