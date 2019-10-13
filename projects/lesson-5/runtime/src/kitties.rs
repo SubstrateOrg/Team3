@@ -189,8 +189,8 @@ impl<T: Trait> Module<T> {
 		let kitty = Self::kitty(ori_kitty);
 		ensure!(kitty.is_some(),"Invalid kitty");
 
-		let sender_kitty = Self::owned_kitties( &(sender.clone(), Some(ori_kitty)) ).ok_or("No owner for this kitty")?;
-		ensure!(sender_kitty.next.unwrap() == ori_kitty, "You do not own this kitty");
+		//let sender_kitty = Self::owned_kitties( &(sender.clone(), Some(ori_kitty)) ).ok_or("No owner for this kitty")?;
+		//ensure!(sender_kitty.next.unwrap() == ori_kitty, "You do not own this kitty");
 
 		OwnedKitties::<T>::remove(&sender, ori_kitty);
 		OwnedKitties::<T>::append(&to, ori_kitty);
