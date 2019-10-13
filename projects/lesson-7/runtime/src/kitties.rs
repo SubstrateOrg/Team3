@@ -46,7 +46,7 @@ decl_event!(
 		Balance = BalanceOf<T>,
 	{
 		/// A kitty is created. (owner, kitty_id)
-		Created(AccountId, KittyIndex),
+		 Created(AccountId, KittyIndex),
 		/// A kitty is transferred. (from, to, kitty_id)
 		Transferred(AccountId, AccountId, KittyIndex),
 		/// A kitty is available for sale. (owner, kitty_id, price)
