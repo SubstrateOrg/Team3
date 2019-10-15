@@ -3,14 +3,11 @@ use support::{
 	Parameter, traits::Currency
 };
 use sr_primitives::traits::{SimpleArithmetic, Bounded, Member};
-use codec::{Encode, Decode};
+use codec::{Encode, Decode, Output, Input};
 use runtime_io::blake2_128;
 use system::ensure_signed;
 use rstd::result;
 use crate::linked_item::{LinkedList, LinkedItem};
-use support::dispatch::Output;
-use support::dispatch::Input;
-use codec::Error;
 
 pub trait Trait: system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
@@ -23,21 +20,16 @@ type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as system::Trait>::Ac
 pub struct Kitty(pub [u8; 16]);
 
 impl Encode for Kitty {
-	fn encode_to<W>(&self, dest: &mut W) where W:Output {
-		self.0.encode_to(dest);
+	fn encode_to<T: Output>(&self, output: &mut T) {
+		output.push(&self.0);
 	}
 }
 
 impl Decode for Kitty {
-	fn decode<I>(input: &mut I) -> Result<Self, Error> where I: Input {
-
-		match <[u8;16]>::decode(input) {
-			Ok(x) => Ok(Kitty(x)),
-			Err(e) => return Err(e),
-		}
+	fn decode<I: Input>(input: &mut I) -> Result<Self, codec::Error> {
+		Ok(Kitty(Decode::decode(input)?))
 	}
 }
-
 
 type KittyLinkedItem<T> = LinkedItem<<T as Trait>::KittyIndex>;
 type OwnedKittiesList<T> = LinkedList<OwnedKitties<T>, <T as system::Trait>::AccountId, <T as Trait>::KittyIndex>;
